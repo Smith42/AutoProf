@@ -1,12 +1,10 @@
 <img src="AP_logo.png" alt="AutoProf" width="300"/>
 
-This pipeline for non-parametric Galaxy image analysis was written with the goal
-of making a tool that is easy for anyone to get started with, yet flexible
-enough to prototype new ideas and support advanced users. It was written
-by [Connor Stone](https://connorjstone.com/) along with lots of testing/help from
+AutoProf is a pipeline for basic and advanced non-parametric galaxy image analysis.
+Its design alows one to easily get started, but provides flexibility to explore new ideas and support advanced users.
+It was written by [Connor Stone](https://connorjstone.com/) with contributions from
 [Nikhil Arora](https://orcid.org/0000-0002-3929-9316),
 [Stephane Courteau](https://www.physics.queensu.ca/facultysites/courteau/),
-[Simon Diaz Garcia](https://orcid.org/0000-0002-4662-1289),
 and [Jean-Charles Cuillandre](https://www.cfht.hawaii.edu/~jcc/).
 
 # Introduction
@@ -234,16 +232,20 @@ In your config file, do not use any of these names unless you intend for AutoPro
 - ap_isoclip_iterations: Maximum number of sigma clipping iterations to perform. The default is infinity, so the sigma clipping procedure repeats until convergence (int)
 - ap_isoclip_nsigma: Number of sigma above median to apply clipping. All values above (median + *ap_isoclip_iterations* x sigma) are removed from the isophote (float) 
 
-#### Radial Sampling
-- ap_radsample_nwedges: number of radial wedges to sample. Recommended choosing a power of 2 (int)
-- ap_radsample_width: User set width of radial sampling in degrees. Default value is 15 degrees (float)
-- ap_radsample_pa: user set position angle at which to measure radial wedges relative to, in degrees (float)
-- ap_radsample_expwidth: tell AutoProf to use exponentially increasing widths for radial samples. In this case *ap_radsample_width* corresponds to the final width of the radial sampling (bool)
-- ap_radsample_variable_pa: tell AutoProf to rotate radial sampling wedges with the position angle profile of the galaxy (bool)
+#### Radial Profiles
+- ap_radialprofiles_nwedges: number of radial wedges to sample. Recommended choosing a power of 2 (int)
+- ap_radialprofiles_width: User set width of radial sampling in degrees. Default value is 15 degrees (float)
+- ap_radialprofiles_pa: user set position angle at which to measure radial wedges relative to the global position angle, in degrees (float)
+- ap_radialprofiles_expwidth: tell AutoProf to use exponentially increasing widths for radial samples. In this case *ap_radialprofiles_width* corresponds to the final width of the radial sampling (bool)
+- ap_radialprofiles_variable_pa: tell AutoProf to rotate radial sampling wedges with the position angle profile of the galaxy (bool)
 
-#### Orthogonal Sampling
-- ap_orthsample_pa: user set position angle at which to align the orthogonal sampling lines, in degrees (float)
-- ap_orthsample_parallel: align orthogonal sampling lines parallel to the major axis instead of perpendicular. This is similar to applying a transpose to the regular orthogonal sampling output matrix (bool)
+#### Axial Profiles
+- ap_axialprofiles_pa: user set position angle at which to align the axial profiles relative to the global position angle, in degrees. A common choice would
+  		       be "90" which would then sample along the semi-major axis instead of the semi-minor axis. (float)
+
+#### Ellipse Model
+- ap_ellipsemodel_resolution: scale factor for the ellipse model resolution. Above 1 increases the precision of the ellipse model (and computation time), between 0 and 1 decreases
+  			      the resolution (and computation time). Note that the ellipse model resolution is defined logarithmically, so the center will always be more resolved (float)
 
 There is one argument that AutoProf can take in the command line, which is the name of the log file.
 The log file stores information about everything that AutoProf is doing, this is useful for diagnostic purposes.
@@ -529,9 +531,9 @@ ap_new_pipeline_methods = {'branch edgeon': lambda IMG,results,options: ('edgeon
 			   'edgeonfit': My_Edgeon_Fit_Method}
 ap_new_pipeline_steps = {'head': ['background', 'psf', 'center', 'isophoteinit', 'branch edgeon'],
 		         'standard': ['isophotefit', 'isophoteextract', 'checkfit', 'writeprof'],
-		         'edgeon': ['edgeonfit', 'isophoteextract', 'writeprof', 'orthsample', 'radsample']}
+		         'edgeon': ['edgeonfit', 'isophoteextract', 'writeprof', 'axialprofiles', 'radialprofiles']}
 ```
-in the config file. This config file would apply a standard pipeline for face-on or moderately inclined galaxies, but a special pipeline for edge-on galaxies which includes a user defined fitting function *My_Edgeon_Fit_Method*, orthogonal sampling profiles, and radial sampling profiles. This example is included in the test folder as the *test_tree_config.py* example config file.
+in the config file. This config file would apply a standard pipeline for face-on or moderately inclined galaxies, but a special pipeline for edge-on galaxies which includes a user defined fitting function *My_Edgeon_Fit_Method*, axial profiles, and radial profiles. This example is included in the test folder as the *test_tree_config.py* example config file.
 
 # Methods that come with AutoProf
 
@@ -596,6 +598,12 @@ Wrapper for photutils method which finds the flux centroid of an image to determ
 
 Similar to the standard isophote initialization method, except flux values along isophotes are evaluated using the mean (instead of the median) which is more accurate in the low S/N limit that pixel values are integers.
 
+### Plot Clean Image
+
+**pipeline label: 'plot image'**
+
+Simply plots an image of the galaxy using hybrid histogram equalization and log scale, without any other features or tests drawn on top. This can be useful for inspecting the image for spurious features without any ellipses, lines, or other objects drawn overtop. The size of the image will be based on when the step is called in the pipeline, if it is called early in the pipeline then a larger and less centered image will be used, calling later in the pipeline will use later pieces of information to choose the image size and centering.
+
 ### Isophote Fitting - Mean
 
 **pipeline label: 'isophotefit mean'**
@@ -638,15 +646,15 @@ Constructs a 2D model image of the galaxy based on the extracted surface brightn
 
 Constructs 2D model image of the galaxy based on the extracted surface brightness, ellipticity, and position angle profile.
 
-### Radial Sampling
+### Radial Profiles
 
-**pipeline label: 'radsample'**
+**pipeline label: 'radialprofiles'**
 
 Samples surface brightness values radially from the center of the galaxy. The radial samples are placed on the semi-minor/major axes by default, though more wedges can be requested and their angle can be specified by the user.
 
-### Orthogonal Sampling
+### Axial Profiles
 
-**pipeline label: 'orthsample'**
+**pipeline label: 'axialprofiles'**
 
 Samples surface brightness values along lines parallel to the semi-minor axis.
 

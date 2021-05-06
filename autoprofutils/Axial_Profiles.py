@@ -10,12 +10,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 import logging
 
-def Orthogonal_Sample(IMG, results, options):
+def Axial_Profiles(IMG, results, options):
 
     mask = results['mask'] if 'mask' in results else None
-    pa = (options['ap_orthsample_pa']*np.pi/180) if 'ap_orthsample_pa' in options else results['init pa']
-    if 'ap_orthsample_parallel' in options and options['ap_orthsample_parallel']:
-        pa += np.pi/2
+    pa = results['init pa'] + ((options['ap_axialprof_pa']*np.pi/180) if 'ap_axialprof_pa' in options else 0.) 
     dat = IMG - results['background']
     zeropoint = options['ap_zeropoint'] if 'ap_zeropoint' in options else 22.5
 
@@ -59,7 +57,7 @@ def Orthogonal_Sample(IMG, results, options):
                     sbE[key][-1].append((2.5*iqr(flux[CHOOSE], rng = (31.731/2, 100 - 31.731/2)) / (2*np.sqrt(np.sum(CHOOSE))*medflux*np.log(10))) if medflux > 0 else 99.999)
                     
 
-    with open('%s%s_orthogonal_sample.prof' % ((options['ap_saveto'] if 'ap_saveto' in options else ''), options['ap_name']), 'w') as f:
+    with open('%s%s_axial_profile_AP.prof' % ((options['ap_saveto'] if 'ap_saveto' in options else ''), options['ap_name']), 'w') as f:
         f.write('R')
         for rd in [1,-1]:
             for ang in [1, -1]:
@@ -96,22 +94,23 @@ def Orthogonal_Sample(IMG, results, options):
                     CHOOSE = np.logical_and(np.array(sb[key][pi]) < 99, np.array(sbE[key][pi]) < 1)
                     plt.errorbar(np.array(R)[CHOOSE]*options['ap_pixscale'], np.array(sb[key][pi])[CHOOSE], yerr = np.array(sbE[key][pi])[CHOOSE],
                                  elinewidth = 1, linewidth = 0, marker = '.', markersize = 3, color = autocmap.reversed()(norm(pR*options['ap_pixscale'])))
-                plt.xlabel('%s-axis position on line [arcsec]' % ('Major' if 'ap_orthsample_parallel' in options and options['ap_orthsample_parallel'] else 'Minor'))
-                plt.ylabel('Surface Brightness [mag/arcsec^2]')
+                plt.xlabel('%s-axis position on line [arcsec]' % ('Major' if 'ap_axialprof_parallel' in options and options['ap_axialprof_parallel'] else 'Minor'), fontsize = 16)
+                plt.ylabel('Surface Brightness [mag arcsec$^{-2}$]', fontsize = 16)
                 # cb1 = matplotlib.colorbar.ColorbarBase(plt.gca(), cmap=cmap,
                 #                                        norm=norm)
                 cb1 = plt.colorbar(matplotlib.cm.ScalarMappable(norm = norm, cmap = autocmap.reversed()))
-                cb1.set_label('%s-axis position of line [arcsec]'  % ('Minor' if 'ap_orthsample_parallel' in options and options['ap_orthsample_parallel'] else 'Major'))
+                cb1.set_label('%s-axis position of line [arcsec]'  % ('Minor' if 'ap_axialprof_parallel' in options and options['ap_axialprof_parallel'] else 'Major'), fontsize = 16)
                 # plt.colorbar()
                 bkgrdnoise = -2.5*np.log10(results['background noise']) + zeropoint + 2.5*np.log10(options['ap_pixscale']**2)
                 plt.axhline(bkgrdnoise, color = 'purple', linewidth = 0.5, linestyle = '--', label = '1$\\sigma$ noise/pixel: %.1f mag arcsec$^{-2}$' % bkgrdnoise)
                 plt.gca().invert_yaxis()
-                plt.legend(fontsize = 10)
-                plt.title('%sR : pa%s90' % ('+' if rd > 0 else '-', '+' if ang > 0 else '-'))
+                plt.legend(fontsize = 15)
+                plt.tick_params(labelsize = 14)
+                plt.title('%sR : pa%s90' % ('+' if rd > 0 else '-', '+' if ang > 0 else '-'), fontsize = 15)
                 plt.tight_layout()
                 if not ('ap_nologo' in options and options['ap_nologo']):
                     AddLogo(plt.gcf())
-                plt.savefig('%sorthogonal_sample_q%i_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', count, options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi'in options else 300)
+                plt.savefig('%saxial_profile_q%i_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', count, options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi'in options else 300)
                 plt.close()
                 count += 1
 
@@ -145,10 +144,9 @@ def Orthogonal_Sample(IMG, results, options):
         plt.legend()
         plt.xlim([0,ranges[0][1] - ranges[0][0]])
         plt.ylim([0,ranges[1][1] - ranges[1][0]])
-        plt.tight_layout()
         if not ('ap_nologo' in options and options['ap_nologo']):
             AddLogo(plt.gcf())
-        plt.savefig('%sorthogonal_sample_lines_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi' in options else 300)
+        plt.savefig('%saxial_profile_lines_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi' in options else 300)
         plt.close()        
             
     return IMG, {}

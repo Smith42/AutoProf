@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.environ['AUTOPROF'])
+from autoprofutils.Plotting_Steps import Plot_Galaxy_Image
 from autoprofutils.Background import Background_Mode, Background_DilatedSources, Background_Unsharp, Background_Basic
 from autoprofutils.PSF import PSF_IRAF, PSF_StarFind
 from autoprofutils.Center import Center_2DGaussian, Center_1DGaussian, Center_OfMass, Center_HillClimb, Center_Forced, Center_HillClimb_mean
@@ -11,8 +12,8 @@ from autoprofutils.Isophote_Extract import Isophote_Extract, Isophote_Extract_Fo
 from autoprofutils.Check_Fit import Check_Fit
 from autoprofutils.Write_Prof import WriteProf
 from autoprofutils.Ellipse_Model import EllipseModel_Fix, EllipseModel_General
-from autoprofutils.Radial_Sample import Radial_Sample
-from autoprofutils.Orthogonal_Sample import Orthogonal_Sample
+from autoprofutils.Radial_Profiles import Radial_Profiles
+from autoprofutils.Axial_Profiles import Axial_Profiles
 from autoprofutils.SharedFunctions import GetOptions, Read_Image, PA_shift_convention
 from multiprocessing import Pool, current_process
 from astropy.io import fits
@@ -52,6 +53,7 @@ class Isophote_Pipeline(object):
                                  'center OfMass': Center_OfMass,
                                  'isophoteinit': Isophote_Initialize,
                                  'isophoteinit mean': Isophote_Initialize_mean,
+                                 'plot image': Plot_Galaxy_Image,
                                  'isophotefit': Isophote_Fit_FFT_Robust,
                                  'isophotefit mean': Isophote_Fit_FFT_mean,
                                  'isophotefit forced': Isophote_Fit_Forced,
@@ -65,8 +67,8 @@ class Isophote_Pipeline(object):
                                  'writeprof': WriteProf,
                                  'ellipsemodel': EllipseModel_Fix,
                                  'ellipsemodel general': EllipseModel_General,
-                                 'radsample': Radial_Sample,
-                                 'orthsample': Orthogonal_Sample}
+                                 'radialprofiles': Radial_Profiles,
+                                 'axialprofiles': Axial_Profiles}
         
         # Default pipeline analysis order
         self.pipeline_steps = {'head': ['background', 'psf', 'center', 'isophoteinit',

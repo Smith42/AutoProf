@@ -111,8 +111,8 @@ def _Generate_Profile(IMG, results, R, E, Ee, PA, PAe, options):
     if 'ap_doplot' in options and options['ap_doplot']:
         CHOOSE = np.logical_and(np.array(SBprof_data['SB']) < 99, np.array(SBprof_data['SB_e']) < 1)
         errscale = 1.
-        # if np.all(np.array(SBprof_data['SB_e'])[CHOOSE] < 0.8):
-        #     errscale = 1/np.max(np.array(SBprof_data['SB_e'])[CHOOSE])
+        if np.all(np.array(SBprof_data['SB_e'])[CHOOSE] < 0.5):
+            errscale = 1/np.max(np.array(SBprof_data['SB_e'])[CHOOSE])
         plt.errorbar(np.array(SBprof_data['R'])[CHOOSE], np.array(SBprof_data['SB'])[CHOOSE], yerr = errscale*np.array(SBprof_data['SB_e'])[CHOOSE],
                      elinewidth = 1, linewidth = 0, marker = '.', markersize = 5, color = 'r', label = 'Surface Brightness (err$\\cdot$%.1f)' % errscale)
         plt.errorbar(np.array(SBprof_data['R'])[np.logical_and(CHOOSE,np.arange(len(CHOOSE)) % 4 == 0)],
@@ -121,12 +121,13 @@ def _Generate_Profile(IMG, results, R, E, Ee, PA, PAe, options):
                      elinewidth = 1, linewidth = 0, marker = '.', markersize = 5, color = 'limegreen')
         # plt.errorbar(np.array(SBprof_data['R'])[CHOOSE], np.array(SBprof_data['totmag'])[CHOOSE], yerr = np.array(SBprof_data['totmag_e'])[CHOOSE],
         #              elinewidth = 1, linewidth = 0, marker = '.', markersize = 5, color = 'orange', label = 'Curve of Growth')
-        plt.xlabel('Semi-Major-Axis [arcsec]')
-        plt.ylabel('Surface Brightness [mag/arcsec$^2$]')
+        plt.xlabel('Semi-Major-Axis [arcsec]', fontsize = 16)
+        plt.ylabel('Surface Brightness [mag arcsec$^{-2}$]', fontsize = 16)
         bkgrdnoise = -2.5*np.log10(results['background noise']) + zeropoint + 2.5*np.log10(options['ap_pixscale']**2)
         plt.axhline(bkgrdnoise, color = 'purple', linewidth = 0.5, linestyle = '--', label = '1$\\sigma$ noise/pixel: %.1f mag arcsec$^{-2}$' % bkgrdnoise)
         plt.gca().invert_yaxis()
-        plt.legend(fontsize = 10)
+        plt.legend(fontsize = 15)
+        plt.tick_params(labelsize = 14)
         plt.tight_layout()
         if not ('ap_nologo' in options and options['ap_nologo']):
             AddLogo(plt.gcf())
@@ -142,7 +143,6 @@ def _Generate_Profile(IMG, results, R, E, Ee, PA, PAe, options):
         for i in range(len(useR)):
             plt.gca().add_patch(Ellipse((results['center']['x'] - ranges[0][0],results['center']['y'] - ranges[1][0]), 2*useR[i], 2*useR[i]*(1. - useE[i]),
                                         usePA[i], fill = False, linewidth = ((i+1)/len(useR))**2, color = 'limegreen' if (i % 4 == 0) else 'r', linestyle = '-' if useR[i] < results['fit R'][-1] else '--'))
-        plt.tight_layout()
         if not ('ap_nologo' in options and options['ap_nologo']):
             AddLogo(plt.gcf())
         plt.savefig('%sphotometry_ellipse_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi'in options else 300)
@@ -276,7 +276,6 @@ def _Generate_Profile_mean(IMG, results, R, E, Ee, PA, PAe, options):
         for i in range(len(useR)):
             plt.gca().add_patch(Ellipse((results['center']['x'] - ranges[0][0],results['center']['y'] - ranges[1][0]), 2*useR[i], 2*useR[i]*(1. - useE[i]),
                                         usePA[i], fill = False, linewidth = ((i+1)/len(useR))**2, color = 'limegreen' if (i % 4 == 0) else 'r', linestyle = '-' if useR[i] < results['fit R'][-1] else '--'))
-        plt.tight_layout()
         if not ('ap_nologo' in options and options['ap_nologo']):
             AddLogo(plt.gcf())
         plt.savefig('%sphotometry_ellipse_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi'in options else 300)

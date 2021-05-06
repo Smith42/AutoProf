@@ -9,6 +9,7 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from scipy.fftpack import fft, ifft
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 import logging
 from copy import copy, deepcopy
 
@@ -233,6 +234,7 @@ def Center_HillClimb(IMG, results, options):
     if res.success:
         current_center['x'] = res.x[0] + ranges[0][0]
         current_center['y'] = res.x[1] + ranges[1][0]
+    track_centers.append([current_center['x'], current_center['y']])
     # paper plot
     if 'ap_paperplots' in options and options['ap_paperplots']:    
         plt.imshow(np.clip(dat,a_min = 0, a_max = None), origin = 'lower', cmap = 'Greys_r', norm = ImageNormalize(stretch=LogStretch()))
@@ -241,12 +243,11 @@ def Center_HillClimb(IMG, results, options):
             plt.gca().add_patch(Ellipse((current_center['x'],current_center['y']), 2*((i+0.5)*results['psf fwhm']),
                                         2*((i+0.5)*results['psf fwhm']),
                                         0, fill = False, linewidth = 0.5, color = 'y'))
-        plt.tight_layout()
         if not ('ap_nologo' in options and options['ap_nologo']):
             AddLogo(plt.gcf())
         plt.savefig('%stest_center_%s.jpg' % (options['ap_plotpath'] if 'ap_plotpath' in options else '', options['ap_name']), dpi = options['ap_plotdpi'] if 'ap_plotdpi'in options else 300)
         plt.close()
-
+        track_centers = np.array(track_centers)
         xwidth = 2*max(np.abs(track_centers[:,0] - current_center['x']))
         ywidth = 2*max(np.abs(track_centers[:,1] - current_center['y']))
         width = max(xwidth, ywidth)
